@@ -6,7 +6,6 @@
 
 struct lastitem_s{
     uint16_t	lpayload;
-    uint16_t 	seqnum;
 };
 
 struct sort12bit_linklist_s{
@@ -80,7 +79,7 @@ static int slinklistInsert(struct sort12bit_linklist_s **list, uint16_t val)
 
 static int sort12bits(struct sort12bit_linklist_s **maxlist, struct lastitem_s *lastlist, uint8_t *datain, int len)
 {
-    int cnt=0, idx=0;
+    int cnt=0, idx=0, rst=0;
     uint8_t *src=0;
     uint32_t tmp=0;
     struct sort12bit_linklist_s *ptr=0;
@@ -96,12 +95,10 @@ static int sort12bits(struct sort12bit_linklist_s **maxlist, struct lastitem_s *
            tmp |= src[2];
 
            lastlist[cnt%32].lpayload = (tmp >> 12) & 0xfff;
-           lastlist[cnt%32].seqnum = cnt >> 5;
            slinklistInsert(maxlist, lastlist[cnt%32].lpayload);
            cnt ++;
 
            lastlist[cnt%32].lpayload = tmp & 0xfff;
-           lastlist[cnt%32].seqnum = cnt >> 5;
            slinklistInsert(maxlist, lastlist[cnt%32].lpayload);
            cnt ++;
 
@@ -113,7 +110,6 @@ static int sort12bits(struct sort12bit_linklist_s **maxlist, struct lastitem_s *
                     tmp = src[0];
                     tmp <<= 4;
                     lastlist[cnt%32].lpayload = tmp;
-                    lastlist[cnt%32].seqnum = cnt >> 5;
                     slinklistInsert(maxlist, lastlist[cnt%32].lpayload);
                     cnt ++;
                     break;
@@ -123,11 +119,9 @@ static int sort12bits(struct sort12bit_linklist_s **maxlist, struct lastitem_s *
                     tmp = src[1];
                     tmp <<= 8;
                     lastlist[cnt%32].lpayload = (tmp >> 12) & 0xfff;
-                    lastlist[cnt%32].seqnum = cnt >> 5;
                     slinklistInsert(maxlist, lastlist[cnt%32].lpayload);
                     cnt ++;
                     lastlist[cnt%32].lpayload = tmp & 0xfff;
-                    lastlist[cnt%32].seqnum = cnt >> 5;
                     slinklistInsert(maxlist, lastlist[cnt%32].lpayload);
                     cnt ++;
                     break;
@@ -144,23 +138,23 @@ static int sort12bits(struct sort12bit_linklist_s **maxlist, struct lastitem_s *
     ptr = *maxlist;
 
     while(ptr) {
-
         printf("%d.%d \n", idx, ptr->spayload);
         idx++;
         ptr = ptr->next;
     }
     
-    idx = 0;
+    rst = cnt % 32;
     for(idx=0; idx < 32; idx++) {
-        printf("%d.%d-%d\n", idx, lastlist[idx].lpayload, lastlist[idx].seqnum);
+        printf("last %d.%d\n", idx, lastlist[(idx+rst)%32].lpayload);
     }
 
-    return 0;
+    return cnt;
 }
 
 void main(int argc, char *argv[])
 {    
-    int ix=0, ret=0, len=0;
+    char str[128];
+    int ix=0, ret=0, len=0, rst=0, cnt=0;
     FILE *fin=0, *fout=0;
     char *datin=0;
     struct sort12bit_linklist_s *maxlist=0, *tmplist=0;
@@ -175,6 +169,12 @@ void main(int argc, char *argv[])
 
     printf("input: %s\n", argv[1]);
     printf("output: %s\n", argv[2]);
+
+    fout = fopen(argv[2], "w+");
+    if (!fout) {
+        printf("file [%s] can't open\n", argv[2]);
+        return;
+    }
 
     fin = fopen(argv[1], "r");
     if (!fin) {
@@ -209,8 +209,56 @@ void main(int argc, char *argv[])
     memset(lastlist, 0, sizeof(struct lastitem_s)*32);
 
     ret = sort12bits(&maxlist, lastlist, datin, len);
-    if (ret) {
+    if (ret < 0) {
         printf("Error!! sort ret: %d \n", ret);
+    } else {
+        printf("sort ret: %d \n", ret);
+        cnt = ret;
+
+        sprintf(str,"--Sorted Max 32 Values--\n");
+        len = strlen(str);
+        fwrite(str, 1, len, fout);
+
+        tmplist = maxlist;
+        if (cnt > 32) {
+            len = cnt - 32;
+            while(len) {
+                if (tmplist) {
+                    tmplist = tmplist->next;
+                } else {
+                    printf("Error!! max list not match len %d \n", len);
+                    break;
+                }
+                len --;
+            }
+        }
+
+        while (tmplist) {
+            sprintf(str, "%d\n", tmplist->spayload);
+            len = strlen(str);
+            fwrite(str, 1, len, fout);
+
+            tmplist = tmplist->next;
+        }
+
+        sprintf(str,"--Last 32 Values--\n");
+        len = strlen(str);
+        fwrite(str, 1, len, fout);
+
+        if (cnt < 32) {
+            for (ix=0; ix < cnt; ix++) {
+                sprintf(str,"%d\n", lastlist[ix].lpayload);
+                len = strlen(str);
+                fwrite(str, 1, len, fout);
+            }
+        } else {
+            rst = cnt % 32;
+            for (ix=0; ix < 32; ix++) {
+                sprintf(str,"%d\n", lastlist[(ix+rst)%32].lpayload);
+                len = strlen(str);
+                fwrite(str, 1, len, fout);
+            }
+        }
     }
 
     while(maxlist) {
@@ -222,5 +270,7 @@ void main(int argc, char *argv[])
     if (datin) {
         free(datin);
     }
+
+    fclose(fout);
 
 }
