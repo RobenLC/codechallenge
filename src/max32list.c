@@ -45,6 +45,7 @@ static int max32ListInsert(struct data_linklist_s **list, uint16_t val, int numb
         } else {
             if (number < 32) {
                 newlist->next = ptr;
+                *list = newlist;
                 return (number + 1);
             }
         }
