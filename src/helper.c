@@ -86,21 +86,7 @@ int print2file(char *filename, struct data_linklist_s *max32list, int size, uint
     sprintf(str,"--Sorted Max 32 Values--\n");
     len = strlen(str);
     fwrite(str, 1, len, fout);
-  
     tmplist = max32list;
-    if (cnt > 32) {
-        len = cnt - 32;
-        while(len) {
-            if (tmplist) {
-                tmplist = tmplist->next;
-            } else {
-                printf("Error!! max list not match len %d \n", len);
-                break;
-            }
-            len --;
-        }
-    }
-  
     while (tmplist) {
         sprintf(str, "%d\n", tmplist->spayload);
         len = strlen(str);
