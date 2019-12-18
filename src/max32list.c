@@ -1,6 +1,10 @@
 
 #include "max32list.h"
-
+/*
+* insert the value into link-list which contains the largest 32 items
+* and keep the number of link-list on 32, in this case, we dont have
+* maintain total number of data which can prevent the memory issue
+*/
 static int max32ListInsert(struct data_linklist_s **list, uint16_t val, int number)
 {
     struct data_linklist_s *head=0, *ptr=0, *newlist=0, *pre=0;
@@ -62,6 +66,10 @@ static int max32ListInsert(struct data_linklist_s **list, uint16_t val, int numb
     return number;
 }
 
+/*
+* shift the msb data into an unsigned 32 bits varible, and retrieve the lsb data 
+* process 3 bytes a time, and treat the len == 1 and len == 2 as special case
+*/
 int sortDataMax32(struct data_linklist_s **maxlist, uint16_t *lastlist, uint8_t *datain, int len)
 {
     int cnt=0, idx=0, rst=0, num=0;
@@ -113,6 +121,7 @@ int sortDataMax32(struct data_linklist_s **maxlist, uint16_t *lastlist, uint8_t 
         }
     }
 
+    /* print the result on screen */
     printf("total: %d\n", cnt);
     idx = 0;
     ptr = *maxlist;

@@ -23,6 +23,7 @@ int main(int argc, char *argv[])
     printf("input: %s\n", argv[1]);
     printf("output: %s\n", argv[2]);
 
+    /* read the input file into memory */
     len = readfile(argv[1], &datin);
     if (len < 0) {
         goto end;
@@ -30,7 +31,6 @@ int main(int argc, char *argv[])
     mem_dump(datin, len);
 
     /* start data processing */
-
     ret = sortDataMax32(&maxlist, lastlist, datin, len);
     if (ret < 0) {
         printf("Error!! sort ret: %d \n", ret);
@@ -39,7 +39,7 @@ int main(int argc, char *argv[])
   
     printf("sort ret: %d \n", ret);
     cnt = ret;
-
+    /* output result to file */
     ret = print2file(argv[2],maxlist,cnt,lastlist);
     if (ret < 0) {
         printf("Error!! print result to file failed, ret: %d \n", ret);
