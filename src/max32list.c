@@ -1,52 +1,69 @@
 
 #include "max32list.h"
 
-static int max32ListInsert(struct data_linklist_s **list, uint16_t val)
+static int max32ListInsert(struct data_linklist_s **list, uint16_t val, int number)
 {
-    struct data_linklist_s *head=0, *ptr=0, *new=0, *lst=0;
+    struct data_linklist_s *head=0, *ptr=0, *newlist=0, *pre=0;
 
     head = *list;
 
-    new = malloc(sizeof(struct data_linklist_s));
-    if (!new) {
+    newlist = malloc(sizeof(struct data_linklist_s));
+    if (!newlist) {
         printf("Error!! memory allocate for new link list item failed !!\n");
         return -1;
     }
 
-    memset(new, 0, sizeof(struct data_linklist_s));
-    new->spayload = val;
+    memset(newlist, 0, sizeof(struct data_linklist_s));
+    newlist->spayload = val;
 
     ptr = head;
-    while(ptr) {
 
-        if (ptr->spayload >= val) {
-            
-            if (ptr == head) {
-                new->spayload = head->spayload;
-                head->spayload = val;
-            }
-            new->next = head->next;
-            head->next = new;
+    if (!ptr) {
+        *list = newlist;
+        return (number + 1);
+    }
+
+    while (ptr) {
+        if (val >= ptr->spayload) {
+            pre = ptr;
+            ptr = ptr->next;
+        } else {
             break;
         }
-        lst = ptr;
-        ptr = ptr->next; 
     }
- 
-    if (!ptr) {
-        if (!lst) {
-            *list = new;
+
+    if (ptr) {
+        if (pre) {
+            pre->next = newlist;
+            newlist->next = ptr;
+            if (number == 32) {
+                *list = head->next;
+                free(head);
+            } else {
+                return (number + 1);
+            }
         } else {
-            lst->next = new;
+            if (number < 32) {
+                newlist->next = ptr;
+                return (number + 1);
+            }
+        }
+    } else {
+        pre->next = newlist;
+        if (number == 32) {
+            *list = head->next;
+            free(head);
+        } else {
+            return (number + 1);
         }
     }
 
-    return 0;
+    return number;
 }
 
 int sortDataMax32(struct data_linklist_s **maxlist, uint16_t *lastlist, uint8_t *datain, int len)
 {
-    int cnt=0, idx=0, rst=0;
+    int cnt=0, idx=0, rst=0, num=0;
     uint8_t *src=0;
     uint32_t tmp=0;
     struct data_linklist_s *ptr=0;
@@ -54,7 +71,28 @@ int sortDataMax32(struct data_linklist_s **maxlist, uint16_t *lastlist, uint8_t 
     src = datain;
     
     while(len) {
-        if (len >= 3) {
+        if (len == 1) {
+            tmp = src[0];
+            //tmp <<= 4;
+            lastlist[cnt%32] = tmp;
+            num = max32ListInsert(maxlist, lastlist[cnt%32], num);
+            cnt ++;
+
+            len = 0;
+        } else if (len == 2) {
+            tmp = src[0];
+            tmp <<= 8;
+            tmp = src[1];
+            //tmp <<= 8;
+            lastlist[cnt%32] = (tmp >> 4) & 0xfff;
+            num = max32ListInsert(maxlist, lastlist[cnt%32], num);
+            cnt ++;
+            lastlist[cnt%32] = tmp & 0xf;
+            num = max32ListInsert(maxlist, lastlist[cnt%32], num);
+            cnt ++;
+
+            len = 0;
+        } else {  /* (len >= 3) */
            tmp = src[0]; 
            tmp <<= 8;
            tmp |= src[1];
@@ -62,41 +100,15 @@ int sortDataMax32(struct data_linklist_s **maxlist, uint16_t *lastlist, uint8_t 
            tmp |= src[2];
 
            lastlist[cnt%32] = (tmp >> 12) & 0xfff;
-           max32ListInsert(maxlist, lastlist[cnt%32]);
+           num = max32ListInsert(maxlist, lastlist[cnt%32], num);
            cnt ++;
 
            lastlist[cnt%32] = tmp & 0xfff;
-           max32ListInsert(maxlist, lastlist[cnt%32]);
+           num = max32ListInsert(maxlist, lastlist[cnt%32], num);
            cnt ++;
 
            len -= 3;
            src += 3;
-        } else {
-            switch(len) {
-                case 1:
-                    tmp = src[0];
-                    tmp <<= 4;
-                    lastlist[cnt%32] = tmp;
-                    max32ListInsert(maxlist, lastlist[cnt%32]);
-                    cnt ++;
-                    break;
-                case 2:
-                    tmp = src[0];
-                    tmp <<= 8;
-                    tmp = src[1];
-                    tmp <<= 8;
-                    lastlist[cnt%32] = (tmp >> 12) & 0xfff;
-                    max32ListInsert(maxlist, lastlist[cnt%32]);
-                    cnt ++;
-                    lastlist[cnt%32] = tmp & 0xfff;
-                    max32ListInsert(maxlist, lastlist[cnt%32]);
-                    cnt ++;
-                    break;
-                default:
-                    break;
-            }
-            
-            len = 0;
         }
     }
 

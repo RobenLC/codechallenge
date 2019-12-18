@@ -27,7 +27,7 @@ int readfile(char *filename, uint8_t **data)
     int ret=0, len=0;
     FILE *fin=0;
     uint8_t *datain=0;
-	
+  
     fin = fopen(filename, "r");
     if (!fin) {
         printf("file [%s] does not exist\n", filename);
@@ -37,8 +37,8 @@ int readfile(char *filename, uint8_t **data)
     ret = fseek(fin, 0, SEEK_END);
     if(ret) {
         printf("input seek end failed ret: %d\n", ret);
-		fclose(fin);
-		return -2;
+    fclose(fin);
+    return -2;
     }
 
     len = ftell(fin);
@@ -47,20 +47,20 @@ int readfile(char *filename, uint8_t **data)
     datain = malloc(len);
     if (!datain) {
         printf("memory allocate failed size: %d \n", len);
-		fclose(fin);
-		return -3;
+    fclose(fin);
+    return -3;
     }
     
     ret = fseek(fin, 0, SEEK_SET);
     if(ret) {
         printf("input seek begin failed ret: %d\n", ret);
-		fclose(fin);
-		return -4;
+    fclose(fin);
+    return -4;
     }
 
     ret = fread(datain, 1, len, fin);
     printf("file read size %d ret: %d \n", len, ret);
-	
+  
     fclose(fin);
 
     *data = datain;
@@ -76,7 +76,7 @@ int print2file(char *filename, struct data_linklist_s *max32list, int size, uint
     struct data_linklist_s *tmplist=0;
 
     cnt = size;
-	
+  
     fout = fopen(filename, "w+");
     if (!fout) {
         printf("file [%s] can't open\n", filename);
@@ -86,7 +86,7 @@ int print2file(char *filename, struct data_linklist_s *max32list, int size, uint
     sprintf(str,"--Sorted Max 32 Values--\n");
     len = strlen(str);
     fwrite(str, 1, len, fout);
-	
+  
     tmplist = max32list;
     if (cnt > 32) {
         len = cnt - 32;
@@ -100,7 +100,7 @@ int print2file(char *filename, struct data_linklist_s *max32list, int size, uint
             len --;
         }
     }
-	
+  
     while (tmplist) {
         sprintf(str, "%d\n", tmplist->spayload);
         len = strlen(str);

@@ -36,7 +36,7 @@ int main(int argc, char *argv[])
         printf("Error!! sort ret: %d \n", ret);
         goto end;
     }
-	
+  
     printf("sort ret: %d \n", ret);
     cnt = ret;
 
