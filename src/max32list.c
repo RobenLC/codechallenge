@@ -91,7 +91,7 @@ int sortDataMax32(struct data_linklist_s **maxlist, uint16_t *lastlist, uint8_t 
         } else if (len == 2) {
             tmp = src[0];
             tmp <<= 8;
-            tmp = src[1];
+            tmp |= src[1];
             //tmp <<= 8;
             lastlist[cnt%32] = (tmp >> 4) & 0xfff;
             num = max32ListInsert(maxlist, lastlist[cnt%32], num);
